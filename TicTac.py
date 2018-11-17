@@ -9,9 +9,7 @@ BUFFSIZE = 1024                 # for socket.send & recv commands
 BACKLOG = 2                     # number of clients supported by server
 SECONDS = 3                     # seconds until socket.timeout (notimplemented)
 # moves dict to translate 'rps' choice
-MOVES = {'r':'Rock',
-         'p':'Paper',
-         's':'Scissors'}
+MOVES = {'1','2','3','4','5','6','7','8','9'}
 # outcome dict stores result for all possible scenarios
 winning_combos = [[0,1,2],  # Horizontal
                       [3,4,5],
@@ -102,9 +100,9 @@ dict;
     else:
         print('%s loses to %s. You lose.' % (MOVES[player['move']],MOVES[opponent['move']]))
         player['lost'] += 1
-    return player
+    return player #SEE IF WE NEED!!!
 
-    def drawBoard(board):
+def drawBoard(board):
         print('   |   |')
         print(' ' + board[7] + ' | ' + board[8] + ' | ' + board[9])
         print('   |   |')
@@ -117,7 +115,7 @@ dict;
         print(' ' + board[1] + ' | ' + board[2] + ' | ' + board[3])
         print('   |   |')
 
-    def inputPlayerLetter():
+def inputPlayerLetter():
         letter = ''
         while not (letter == 'X' or letter == 'O'):
             print('Do you want to be X or O?')
@@ -127,25 +125,26 @@ dict;
             else:
                 return ['O', 'X']
 
-    def whoGoesFirst():
+def whoGoesFirst():
         if random.randint(0, 1) == 0:
             return 'computer'
         else:
             return 'player'
-    def whoGoesFirstPVP():
+
+def whoGoesFirstPVP():
         if random.randint(0, 1) == 0:
             return 'player1'
         else:
             return 'player2'
 
-    def playAgain():
+def playAgain():
         print('Do you want to play again? (yes or no)')
         return input().lower().startswith('y')
-    def makeMove(board, letter, move):
+
+def makeMove(board, letter, move):
         board[move] = letter
 
-
-    def isWinner(bo, le):
+def isWinner(bo, le):
         return ((bo[7] == le and bo[8] == le and bo[9] == le) or # across the top
                 (bo[4] == le and bo[5] == le and bo[6] == le) or # across the middle
                 (bo[1] == le and bo[2] == le and bo[3] == le) or # across the bottom
@@ -155,23 +154,23 @@ dict;
                 (bo[7] == le and bo[5] == le and bo[3] == le) or # diagonal
                 (bo[9] == le and bo[5] == le and bo[1] == le)) # diagonal
 
-    def getBoardCopy(board):
+def getBoardCopy(board):
         dupeBoard = []
         for i in board:
             dupeBoard.append(i)
         return dupeBoard
 
-    def isSpaceFree(board, move):
+def isSpaceFree(board, move):
         return board[move] == ' '
 
-    def getPlayerMove(board):
+def getPlayerMove(board):
         move = ' '
         while move not in '1 2 3 4 5 6 7 8 9'.split() or not isSpaceFree(board, int(move)):
             print('What is your next move? (1-9)')
             move = input()
         return int(move)
 
-    def chooseRandomMoveFromList(board, movesList):
+def chooseRandomMoveFromList(board, movesList):
         possibleMoves = []
         for i in movesList:
             if isSpaceFree(board, i):
@@ -180,7 +179,8 @@ dict;
                 return random.choice(possibleMoves)
             else:
                 return None
-    def getComputerMove(board, computerLetter):
+
+def getComputerMove(board, computerLetter):
 
         if computerLetter == 'X':
             playerLetter = 'O'
@@ -208,7 +208,7 @@ dict;
             return 5
         return chooseRandomMoveFromList(board, [2, 4, 6, 8])
 
-    def isBoardFull(board):
+def isBoardFull(board):
         for i in range(1, 10):
             if isSpaceFree(board, i):
                 return False
