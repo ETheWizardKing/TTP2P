@@ -4,7 +4,7 @@ from random import choice
 from pickle import dumps, loads
 from pprint import pprint
 
-HOST, PORT = "localhost", 9999  # defined for now
+HOST, PORT = "0.0.0.0", 8000  # defined for now
 BUFFSIZE = 1024                 # for socket.send & recv commands
 BACKLOG = 2                     # number of clients supported by server
 SECONDS = 3                     # seconds until socket.timeout (notimplemented)
@@ -34,11 +34,11 @@ def main_menu(game):
     game['sentmessage'] = ''    # player's previous message
     game['start'] = True        # setting up the game boolean
 
-    print("\tROCK PAPER SCISSORS\n")
+    print("\tTic-Tac-Toe\n")
     if game['name']=='':        # if returning to menu don't display the following
         game['name'] = get_name()
-        print("Welcome "+game['name']+". Remember...")
-        print("Rock smashes scissors! Paper covers Rock! Scissors cuts paper!\n")
+        print("Welcome "+game['name'])
+
     print("1. Play single player game")
     print("2. Start two player game")
     print("3. Join two player game")
@@ -104,13 +104,6 @@ dict;
         player['lost'] += 1
     return player
 
-def one_player(game):
-    """ implements one player game with minimal opponent dict """
-    print("\nType (R)ock, (P)aper or (S)cissors to play. (q)uit to return to \main menu.")
-    opponent = {}
-    opponent['name'] = 'Computer'
-
-
     def drawBoard(board):
         print('   |   |')
         print(' ' + board[7] + ' | ' + board[8] + ' | ' + board[9])
@@ -139,6 +132,11 @@ def one_player(game):
             return 'computer'
         else:
             return 'player'
+    def whoGoesFirstPVP():
+        if random.randint(0, 1) == 0:
+            return 'player1'
+        else:
+            return 'player2'
 
     def playAgain():
         print('Do you want to play again? (yes or no)')
@@ -215,6 +213,15 @@ def one_player(game):
             if isSpaceFree(board, i):
                 return False
         return True
+
+def one_player(game):
+    """ implements one player game with minimal opponent dict """
+
+    opponent = {}
+    opponent['name'] = 'Computer'
+
+
+
     print('Welcome to Tic Tac Toe!')
 
     while True:
@@ -224,39 +231,39 @@ def one_player(game):
         print('The ' + turn + ' will go first.')
         gameIsPlaying = True
 
-        while gameIsPlaying:
-            if turn == 'player':
+    while gameIsPlaying:
+        if turn == 'player':
+            drawBoard(theBoard)
+            move = getPlayerMove(theBoard)
+            makeMove(theBoard, playerLetter, move)
+            if isWinner(theBoard, playerLetter):
                 drawBoard(theBoard)
-                move = getPlayerMove(theBoard)
-                makeMove(theBoard, playerLetter, move)
-                if isWinner(theBoard, playerLetter):
-                    drawBoard(theBoard)
-                    print('Hooray! You have won the game!')
-                    gameIsPlaying = False
-                else:
-                    if isBoardFull(theBoard):
-                        drawBoard(theBoard)
-                        print('The game is a tie!')
-                        break
-                    else:
-                        turn = 'computer'
-
+                print('Hooray! You have won the game!')
+                gameIsPlaying = False
             else:
-
-                move = getComputerMove(theBoard, computerLetter)
-                makeMove(theBoard, computerLetter, move)
-
-                if isWinner(theBoard, computerLetter):
+                if isBoardFull(theBoard):
                     drawBoard(theBoard)
-                    print('The computer has beaten you! You lose.')
-                    gameIsPlaying = False
+                    print('The game is a tie!')
+                    break
                 else:
-                    if isBoardFull(theBoard):
-                        drawBoard(theBoard)
-                        print('The game is a tie!')
-                        break
-                    else:
-                        turn = 'player'
+                    turn = 'computer'
+
+        else:
+
+            move = getComputerMove(theBoard, computerLetter)
+            makeMove(theBoard, computerLetter, move)
+
+            if isWinner(theBoard, computerLetter):
+                drawBoard(theBoard)
+                print('The computer has beaten you! You lose.')
+                gameIsPlaying = False
+            else:
+                if isBoardFull(theBoard):
+                    drawBoard(theBoard)
+                    print('The game is a tie!')
+                    break
+                else:
+                    turn = 'player'
 
         if not playAgain():
             break
@@ -270,45 +277,65 @@ def start_two_player(game):
     sock.listen(BACKLOG)
     serverip, serverport = sock.getsockname()
     print("Running at %s, %s" % (serverip, serverport))
-    print("\nType (R)ock, (P)aper or (S)cissors to play. (q)uit to \ return to main menu.")
     print("Waiting for player...")
 
     client, address = sock.accept()
     clientip, clientport = address
     # server/game loop
-    while True:
-        try:
-            P2game = loads(client.recv(BUFFSIZE))   # receive other game variables
-        except EOFError:                            # if available
+while True:
+    try:
+        P2game = loads(client.recv(BUFFSIZE))
+    except EOFError:
             print(P2game['name'], "left the game.")
             break
-        client.send(dumps(game))                    # send our variables
-        # it's either the start...
-        if P2game['start']:
-            print(P2game['name'],"logged on at", clientip, clientport)
-            game['start'] = False
-        # or there's a message
-        if P2game['message']!='' and P2game['message']!=game ['sentmessage']:
-            print(P2game['name']+': '+P2game['message'])
-            game['sentmessage'] = P2game['message'] # to avoid many print calls
-            game['move'] = ''   # message always takespriority
-        # or there's a move
-        if game['move']=='':
-            game['move'] = safe_input('1, 2, 3, GO! ')
-            if game['move']=='q':
-                break
-            elif game['move'] not in 'rps':
-                game['message'] = game['move']
-                game['move'] = ''
-        # only check result if P2game also made a move
-        if P2game['move']!='':
-            # check game outcome dict
-            game=get_result(game, P2game)
-            game['move']=''
+    client.send(dumps(game))
+
+
+    theBoard = [' '] * 10
+    p1Letter, p2Letter = inputPlayerLetter()
+    turn = whoGoesFirstPVP()
+    print('The ' + turn + ' will go first.')
+    gameIsPlaying = True
+
+    while gameIsPlaying:
+        if turn == 'player1':
+            drawBoard(theBoard)
+            move = getPlayerMove(theBoard)
+            makeMove(theBoard, playerLetter, move)
+            if isWinner(theBoard, playerLetter):
+                drawBoard(theBoard)
+                print('Hooray! You have won the game!')
+                gameIsPlaying = False
+            else:
+                if isBoardFull(theBoard):
+                    drawBoard(theBoard)
+                    print('The game is a tie!')
+                    break
+                else:
+                    turn = 'player2'
+
+        else:
+
+            drawBoard(theBoard)
+            move = getPlayerMove(theBoard)
+            makeMove(theBoard, playerLetter, move)
+            if isWinner(theBoard, playerLetter):
+                drawBoard(theBoard)
+                print('Hooray! You have won the game!')
+                gameIsPlaying = False
+            else:
+                if isBoardFull(theBoard):
+                    drawBoard(theBoard)
+                    print('The game is a tie!')
+                    break
+                else:
+                    turn = 'player1'
+
+    if not playAgain():
+        break
     # exit loop
     client.close()
-    print('\nYou won %s, lost %s, drew %s (%s total)\n' % \
-          (game['won'],game['lost'],game['drew'],game['total']))
+
     main_menu(game)
 
 def two_player_join(game):
@@ -318,7 +345,6 @@ def two_player_join(game):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((HOST, PORT))
 
-    print("\nType (R)ock, (P)aper or (S)cissors to play. (q)uit to \ return to main menu.")
 
     # client/game loop
     while True:
@@ -328,24 +354,48 @@ def two_player_join(game):
         except EOFError:
             print(P1game['name'], "left the game.")
             break
-        if P1game['start']:
-            print("You're connected to "+P1game['name']+"'s game.")
-            game['start'] = False
-        if P1game['message']!='' and P1game['message']!=game ['sentmessage']:
-            print(P1game['name']+': '+P1game['message'])
-            game['sentmessage'] = P1game['message']
-            game['move'] = ''
-        if game['move']=='':
-            game['move'] = safe_input('1, 2, 3, GO! ')
-            if game['move']=='q':
-                break
-            elif game['move'] not in 'rps':
-                game['message'] = game['move']
-                game['move'] = ''
-        if P1game['move']!='':
-            # check game outcome dict
-            game=get_result(game, P1game)
-            game['move']=''
+        theBoard = [' '] * 10
+        p1Letter, p2Letter = inputPlayerLetter()
+        turn = whoGoesFirstPVP()
+        print('The ' + turn + ' will go first.')
+        gameIsPlaying = True
+
+        while gameIsPlaying:
+            if turn == 'player1':
+                drawBoard(theBoard)
+                move = getPlayerMove(theBoard)
+                makeMove(theBoard, playerLetter, move)
+                if isWinner(theBoard, playerLetter):
+                    drawBoard(theBoard)
+                    print('Hooray! You have won the game!')
+                    gameIsPlaying = False
+                else:
+                    if isBoardFull(theBoard):
+                        drawBoard(theBoard)
+                        print('The game is a tie!')
+                        break
+                    else:
+                        turn = 'player2'
+
+            else:
+
+                drawBoard(theBoard)
+                move = getPlayerMove(theBoard)
+                makeMove(theBoard, playerLetter, move)
+                if isWinner(theBoard, playerLetter):
+                    drawBoard(theBoard)
+                    print('Hooray! You have won the game!')
+                    gameIsPlaying = False
+                else:
+                    if isBoardFull(theBoard):
+                        drawBoard(theBoard)
+                        print('The game is a tie!')
+                        break
+                    else:
+                        turn = 'player1'
+
+        if not playAgain():
+            break
     # exit loop
     sock.close()
     print('\nYou won %s, lost %s, drew %s (%s total)\n' % \
